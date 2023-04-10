@@ -4,78 +4,12 @@ import { ethers } from "ethers";
 import abi from "./utils/WavePortal.json";
 
 const App = () => {
+  /* ユーザーのパブリックウォレットを保存するために使用する状態変数を定義します */
   const [currentAccount, setCurrentAccount] = useState("");
-  const [messageValue, setMessageValue] = useState("");
-  const [allWaves, setAllWaves] = useState([]);
   console.log("currentAccount: ", currentAccount);
-  const contractAddress = "0x1F028b6fda403fd4965a8Bb83B4B70AD9C4d1057";
+  const contractAddress = "0x9Eb31158122DCd96a83bd665D737eD489B73EE57";
   const contractABI = abi.abi;
-
-  const getAllWaves = async () => {
-    const { ethereum } = window;
-
-    try {
-      if (ethereum) {
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
-        const wavePortalContract = new ethers.Contract(
-          contractAddress,
-          contractABI,
-          signer
-        );
-
-        const waves = await wavePortalContract.getAllWaves();
-        const wavesCleaned = waves.map((wave) => {
-          return {
-            address: wave.waver,
-            timestamp: new Date(wave.timestamp * 1000),
-            message: wave.message,
-          };
-        });
-
-        setAllWaves(wavesCleaned);
-      } else {
-        console.log("Ethereum object doesn't exist!");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    let wavePortalContract;
-
-    const onNewWave = (from, timestamp, message) => {
-      console.log("NewWave", from, timestamp, message);
-      setAllWaves((prevState) => [
-        ...prevState,
-        {
-          address: from,
-          timestamp: new Date(timestamp * 1000),
-          message: message,
-        },
-      ]);
-    };
-
-    if (window.ethereum) {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-
-      const wavePortalContract = new ethers.Contract(
-        contractAddress,
-        contractABI,
-        signer
-      );
-      wavePortalContract.on("NewWave", onNewWave);
-    }
-
-    return () => {
-      if (wavePortalContract) {
-        wavePortalContract.off("NewWave", onNewWave);
-      }
-    };
-  }, []);
-
+  /* window.ethereumにアクセスできることを確認します */
   const checkIfWalletIsConnected = async () => {
     try {
       const { ethereum } = window;
@@ -85,6 +19,7 @@ const App = () => {
       } else {
         console.log("We have the ethereum object", ethereum);
       }
+      /* ユーザーのウォレットへのアクセスが許可されているかどうかを確認します */
       const accounts = await ethereum.request({ method: "eth_accounts" });
       if (accounts.length !== 0) {
         const account = accounts[0];
@@ -97,7 +32,7 @@ const App = () => {
       console.log(error);
     }
   };
-
+  // connectWalletメソッドを実装
   const connectWallet = async () => {
     try {
       const { ethereum } = window;
@@ -114,7 +49,7 @@ const App = () => {
       console.log(error);
     }
   };
-
+  // Waveの回数をカウントする関数を実装
   const wave = async () => {
     try {
       const { ethereum } = window;
@@ -128,40 +63,21 @@ const App = () => {
         );
         let count = await wavePortalContract.getTotalWaves();
         console.log("Retrieved total wave count...", count.toNumber());
-
-        let contractBalance = await provider.getBalance(wavePortalContract.address);
-        console.log("Contract balance:", ethers.utils.formatEther(contractBalance));
-
-        const waveTxn = await wavePortalContract.wave(messageValue, {
-          gasLimit: 300000,
-        });
+        const waveTxn = await wavePortalContract.wave();
         console.log("Mining...", waveTxn.hash);
         await waveTxn.wait();
         console.log("Mined -- ", waveTxn.hash);
         count = await wavePortalContract.getTotalWaves();
         console.log("Retrieved total wave count...", count.toNumber());
-
-        let contractBalance_post = await provider.getBalance(
-          wavePortalContract.address
-        );
-
-        if (contractBalance_post.lt(contractBalance)) {
-          console.log("User won ETH!");
-        } else {
-          console.log("User didn't win ETH.");
-        }
-        console.log(
-          "Contract balance after wave:",
-          ethers.utils.formatEther(contractBalance_post)
-        );
       } else {
         console.log("Ethereum object doesn't exist!");
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
+  // WEBページがロードされたときに下記の関数を実行します
   useEffect(() => {
     checkIfWalletIsConnected();
   }, []);
@@ -185,8 +101,10 @@ const App = () => {
             ✨
           </span>
         </div>
-        <br />
-        { }
+        <button className="waveButton" onClick={wave}>
+          Wave at Me
+        </button>
+        {/* ウォレットコネクトのボタンを実装 */}
         {!currentAccount && (
           <button className="waveButton" onClick={connectWallet}>
             Connect Wallet
@@ -197,43 +115,6 @@ const App = () => {
             Wallet Connected
           </button>
         )}
-        { }
-        {currentAccount && (
-          <button className="waveButton" onClick={wave}>
-            Wave at Me
-          </button>
-        )}
-        { }
-        {currentAccount && (
-          <textarea
-            name="messageArea"
-            placeholder="メッセージはこちら"
-            type="text"
-            id="message"
-            value={messageValue}
-            onChange={(e) => setMessageValue(e.target.value)}
-          />
-        )}
-        {currentAccount &&
-          allWaves
-            .slice(0)
-            .reverse()
-            .map((wave, index) => {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: "#F8F8FF",
-                    marginTop: "16px",
-                    padding: "8px",
-                  }}
-                >
-                  <div>Address: {wave.address}</div>
-                  <div>Time: {wave.timestamp.toString()}</div>
-                  <div>Message: {wave.message}</div>
-                </div>
-              );
-            })}
       </div>
     </div>
   );
