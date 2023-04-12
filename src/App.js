@@ -14,7 +14,8 @@ const App = () => {
 
   //const contractAddress = "0x9Eb31158122DCd96a83bd665D737eD489B73EE57";
   //const contractAddress = "0x9d3F0354b837a68B5cAc9c9Fc3f0E733C0B2a1CD";
-  const contractAddress = "0xdf6dbf06f62c3afc1367e681afb43ed3f87e6526";
+  //const contractAddress = "0xdf6dbf06f62c3afc1367e681afb43ed3f87e6526";
+  const contractAddress = "0x594D3E8614b194e88c241217F85Bfa18A5ee4a78";
   const contractABI = abi.abi;
 
   const getAllWaves = async () => {
@@ -140,6 +141,13 @@ const App = () => {
         );
         let count = await wavePortalContract.getTotalWaves();
         console.log("Retrieved total wave count...", count.toNumber());
+        let contractBalance = await provider.getBalance(
+          wavePortalContract.address
+        );
+        console.log(
+          "Contract balance:",
+          ethers.utils.formatEther(contractBalance)
+        );
 
         // コントラクトにwaveを書き込む
         const waveTxn = await wavePortalContract.wave(messageValue, {
@@ -150,6 +158,20 @@ const App = () => {
         console.log("Mined -- ", waveTxn.hash);
         count = await wavePortalContract.getTotalWaves();
         console.log("Retrieved total wave count...", count.toNumber());
+
+        let contractBalance_post = await provider.getBalance(
+          wavePortalContract.address
+        );
+        // コントラクトの残高が減っていいることを確認
+        if (contractBalance_post.lt(contractBalance)) {
+          console.log("User won ETH!");
+        } else {
+          console.log("User didn't win ETH.");
+        }
+        console.log(
+          "Contract balance after wave:",
+          ethers.utils.formatEther(contractBalance_post)
+        );
       } else {
         console.log("Ethereum object doesn't exist!");
       }
