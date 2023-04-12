@@ -212,7 +212,7 @@ const App = () => {
           </button>
         )}
         {currentAccount && (
-          <button className="waveButton">Wallet Connected</button>
+          <button className="walletConected">Wallet Connected</button>
         )}
         {/* waveボタンにwave関数を連動 */}
         {currentAccount && (
