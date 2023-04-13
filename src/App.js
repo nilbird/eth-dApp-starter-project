@@ -6,6 +6,9 @@ import abi from "./utils/WavePortal.json";
 const App = () => {
   /* ユーザーのパブリックウォレットを保存するために使用する状態変数を定義します */
   const [currentAccount, setCurrentAccount] = useState("");
+
+  const [currentChainID, setCurrentChainID] = useState(0);
+
   // ユーザーのメッセージを保存するために使用する状態変数を定義
   const [messageValue, setMessageValue] = useState("");
   // すべてのwavesを保存する状態変数を定義
@@ -18,17 +21,50 @@ const App = () => {
   const contractAddress = "0x594D3E8614b194e88c241217F85Bfa18A5ee4a78";
   const contractABI = abi.abi;
 
+  const chainIdSepolia = 11155111;
+
+  const getChainID = async (ethereum) => {
+    const chainId = await ethereum.request({ method: "eth_chainId" });
+    return parseInt(chainId);
+  };
+
+  const isSepolia = () => currentChainID === chainIdSepolia;
+
+  const accountChanged = async (accounts) => {
+    const account = accounts.length ? accounts[0] : "";
+    setCurrentAccount(account);
+    console.log("account changed:", account);
+    getAllWaves();
+  };
+
+  const chainIdChanged = async (strChainID) => {
+    const chainID = parseInt(strChainID);
+    setCurrentChainID(chainID);
+    console.log("chainID changed:", chainID);
+    getAllWaves();
+  };
+
   const getAllWaves = async () => {
     const { ethereum } = window;
 
     try {
       if (ethereum) {
+        const chainID = await getChainID(ethereum);
+        console.log(chainID);
+        setCurrentChainID(chainID);
+
+        if (chainID !== chainIdSepolia) {
+          setAllWaves([]);
+          return;
+        }
+
         const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
+        //const signer = provider.getSigner();
         const wavePortalContract = new ethers.Contract(
           contractAddress,
           contractABI,
-          signer
+          // signer,
+          provider // signerを指定しない場合はReadOnly
         );
         // コントラクトからgetAllWavesメソッドを呼び出す
         const waves = await wavePortalContract.getAllWaves();
@@ -43,9 +79,11 @@ const App = () => {
         // React Stateにデータを格納する
         setAllWaves(wavesCleaned);
       } else {
+        setAllWaves([]);
         console.log("Ethereum object doesn't exist!");
       }
     } catch (error) {
+      setAllWaves([]);
       console.log(error);
     }
   };
@@ -102,7 +140,7 @@ const App = () => {
         const account = accounts[0];
         console.log("Found an authorized account: ", account);
         setCurrentAccount(account);
-        getAllWaves();
+        //getAllWaves();
       } else {
         console.log("No authorized account found");
       }
@@ -183,7 +221,21 @@ const App = () => {
 
   // WEBページがロードされたときに下記の関数を実行します
   useEffect(() => {
+    const { ethereum } = window;
+    if (ethereum) {
+      ethereum.on("accountsChanged", accountChanged);
+      ethereum.on("chainChanged", chainIdChanged);
+    }
+
     checkIfWalletIsConnected();
+    getAllWaves();
+
+    return () => {
+      if (ethereum) {
+        ethereum.removeListener("accountsChanged", accountChanged);
+        ethereum.removeListener("chainChanged", chainIdChanged);
+      }
+    };
   }, []);
 
   return (
@@ -213,27 +265,33 @@ const App = () => {
           </button>
         )}
         {currentAccount && (
-          <button className="walletConected">Wallet Connected</button>
-        )}
-        {/* waveボタンにwave関数を連動 */}
-        {currentAccount && (
-          <button className="waveButton" onClick={wave}>
-            Wave at Me
+          <button className="walletConected">
+            {isSepolia()
+              ? "Wallet Connected"
+              : "MetaMaskの接続先をSepoliaテストネットワークに変更してください"}
           </button>
         )}
+        {/* waveボタンにwave関数を連動 */}
         {/* メッセージボックスを実装 */}
-        {currentAccount && (
-          <textarea
-            name="messageArea"
-            placeholder="メッセージはこちら"
-            type="text"
-            id="message"
-            value={messageValue}
-            onChange={(e) => setMessageValue(e.target.value)}
-          />
+        {currentAccount && isSepolia() && (
+          <>
+            <button className="waveButton" onClick={wave}>
+              Wave at Me
+            </button>
+            <textarea
+              name="messageArea"
+              placeholder="メッセージはこちら"
+              type="text"
+              id="message"
+              value={messageValue}
+              onChange={(e) => setMessageValue(e.target.value)}
+            />
+          </>
         )}
         {/* 履歴を表示する */}
-        {currentAccount &&
+        <div className="waveCount">Wave Count : {allWaves.length}</div>
+        {isSepolia() &&
+          allWaves !== [] &&
           allWaves
             .slice(0)
             .reverse()
