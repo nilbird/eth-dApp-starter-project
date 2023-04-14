@@ -15,10 +15,7 @@ const App = () => {
   const [allWaves, setAllWaves] = useState([]);
   console.log("currentAccount: ", currentAccount);
 
-  //const contractAddress = "0x9Eb31158122DCd96a83bd665D737eD489B73EE57";
-  //const contractAddress = "0x9d3F0354b837a68B5cAc9c9Fc3f0E733C0B2a1CD";
-  //const contractAddress = "0xdf6dbf06f62c3afc1367e681afb43ed3f87e6526";
-  const contractAddress = "0x594D3E8614b194e88c241217F85Bfa18A5ee4a78";
+  const contractAddress = "0xa1750e83d0c13fc151166596c244adb471a15069";
   const contractABI = abi.abi;
 
   const chainIdSepolia = 11155111;
@@ -69,9 +66,13 @@ const App = () => {
         // コントラクトからgetAllWavesメソッドを呼び出す
         const waves = await wavePortalContract.getAllWaves();
         const wavesCleaned = waves.map((wave) => {
+          console.log("address:", wave.waver, typeof wave.waver);
+          console.log("prize:", wave.prizeAmount, typeof wave.prizeAmount);
+
           return {
             address: wave.waver,
             timestamp: new Date(wave.timestamp * 1000),
+            prizeAmount: wave.prizeAmount,
             message: wave.message,
           };
         });
@@ -92,13 +93,14 @@ const App = () => {
   useEffect(() => {
     let wavePortalContract;
 
-    const onNewWave = (from, timestamp, message) => {
-      console.log("NewWave", from, timestamp, message);
+    const onNewWave = (from, timestamp, prizeAmount, message) => {
+      console.log("NewWave", from, timestamp, prizeAmount, message);
       setAllWaves((prevState) => [
         ...prevState,
         {
           address: from,
           timestamp: new Date(timestamp * 1000),
+          prizeAmount: prizeAmount,
           message: message,
         },
       ]);
@@ -299,15 +301,24 @@ function Waves({ waves }) {
   return (
     <div>
       <div className="waveCount">Wave Count : {waves.length}</div>
-      {waves.reverse().map((wave, index) => {
-        return (
-          <div key={index} className="waveMessage">
-            <div>Address: {wave.address}</div>
-            <div>Time: {wave.timestamp.toString()}</div>
-            <div>Message: {wave.message}</div>
-          </div>
-        );
-      })}
+      {waves
+        .slice(0)
+        .reverse()
+        .map((wave, index) => {
+          return (
+            <div
+              key={index}
+              className={
+                0 < wave.prizeAmount ? "waveMessageWin" : "waveMessage"
+              }
+            >
+              <div>Address: {wave.address}</div>
+              <div>Time: {wave.timestamp.toString()}</div>
+              <div>Prize: {ethers.utils.formatEther(wave.prizeAmount)}</div>
+              <div>Message: {wave.message}</div>
+            </div>
+          );
+        })}
     </div>
   );
 }
