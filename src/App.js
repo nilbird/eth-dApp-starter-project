@@ -289,30 +289,27 @@ const App = () => {
           </>
         )}
         {/* 履歴を表示する */}
-        <div className="waveCount">Wave Count : {allWaves.length}</div>
-        {isSepolia() &&
-          allWaves !== [] &&
-          allWaves
-            .slice(0)
-            .reverse()
-            .map((wave, index) => {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: "#F8F8FF",
-                    marginTop: "16px",
-                    padding: "8px",
-                  }}
-                >
-                  <div>Address: {wave.address}</div>
-                  <div>Time: {wave.timestamp.toString()}</div>
-                  <div>Message: {wave.message}</div>
-                </div>
-              );
-            })}
+        {isSepolia() && allWaves !== [] && <Waves waves={allWaves} />}
       </div>
     </div>
   );
 };
+
+function Waves({ waves }) {
+  return (
+    <div>
+      <div className="waveCount">Wave Count : {waves.length}</div>
+      {waves.reverse().map((wave, index) => {
+        return (
+          <div key={index} className="waveMessage">
+            <div>Address: {wave.address}</div>
+            <div>Time: {wave.timestamp.toString()}</div>
+            <div>Message: {wave.message}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default App;

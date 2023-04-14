@@ -44,3 +44,9 @@
 .waveCount {
   margin-top: 16px;
 }
+
+.waveMessage {
+  background-color: #f8f8ff;
+  margin-top: 16px;
+  padding: 8px;
+}
