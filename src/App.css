@@ -40,19 +40,3 @@
   border-radius: 5px;
   background-color: #fcfcfc;
 }
-
-.waveCount {
-  margin-top: 16px;
-}
-
-.waveMessage {
-  background-color: #f8f8ff;
-  margin-top: 16px;
-  padding: 8px;
-}
-
-.waveMessageWin {
-  background-color: #fff8ff;
-  margin-top: 16px;
-  padding: 8px;
-}

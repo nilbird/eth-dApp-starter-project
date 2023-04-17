@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import { ethers } from "ethers";
 import abi from "./utils/WavePortal.json";
+import styles from "./wave.module.css";
 
 const App = () => {
   /* ユーザーのパブリックウォレットを保存するために使用する状態変数を定義します */
@@ -300,18 +301,15 @@ const App = () => {
 function Waves({ waves }) {
   return (
     <div>
-      <div className="waveCount">Wave Count : {waves.length}</div>
+      <div className={styles.waveCount}>Wave Count : {waves.length}</div>
       {waves
         .slice(0)
         .reverse()
         .map((wave, index) => {
+          const className =
+            0 < wave.prizeAmount ? styles.waveMessageWin : styles.waveMessage;
           return (
-            <div
-              key={index}
-              className={
-                0 < wave.prizeAmount ? "waveMessageWin" : "waveMessage"
-              }
-            >
+            <div key={index} className={className}>
               <div>Address: {wave.address}</div>
               <div>Time: {wave.timestamp.toString()}</div>
               <div>Prize: {ethers.utils.formatEther(wave.prizeAmount)}</div>
